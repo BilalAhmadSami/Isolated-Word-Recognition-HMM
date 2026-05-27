@@ -98,6 +98,28 @@ Recognition performance is summarised with a **confusion matrix** (visualised wi
 
 ---
 
+## Results
+
+### Training Convergence
+
+The total log-likelihood increases steeply in the first 6 epochs and plateaus from epoch 7 onwards, confirming that Baum–Welch converged successfully.
+
+![Total Log-Likelihood per Epoch](results/log_likelihood_per_epoch.png)
+
+All 11 word models converge at similar rates, with "hard" converging more slowly due to its acoustically distinct vowel.
+
+![Per-Word Log-Likelihood](results/per_word_log_likelihood.png)
+
+### Evaluation — Confusion Matrix
+
+**Test set accuracy: 23.97%** (error rate: 76.03%)
+
+![Confusion Matrix](results/confusion_matrix.png)
+
+The low accuracy is expected given the extreme phonetic similarity of the vocabulary (all words share the same consonant frame /h_d/ and differ only by their vowel). The confusion matrix shows the recogniser systematically confusing acoustically adjacent vowels — for example, "hid" predicted as "head", and "had"/"hard"/"hud"/"hod"/"hoard" collapsing onto each other. This is a known challenge of isolated-word HMM systems on minimal-pair vocabularies without additional discriminative training.
+
+---
+
 ## Repository Structure
 
 ```
@@ -105,6 +127,12 @@ Isolated-Word-Recognition-HMM/
 ├── descriptor_extraction.py   # MFCC feature extraction pipeline
 ├── hmm_training.py            # HMM initialisation + Baum–Welch training
 ├── hmm_testing.py             # Viterbi decoding + evaluation
+├── results/
+│   ├── log_likelihood_per_epoch.png
+│   ├── per_word_log_likelihood.png
+│   ├── transition_matrices_before_training.png
+│   ├── transition_matrices_after_training.png
+│   └── confusion_matrix.png
 ├── requirements.txt
 └── README.md
 ```
@@ -143,40 +171,3 @@ python descriptor_extraction.py
 
 ### 4. Train HMMs
 ```bash
-python hmm_training.py
-```
-
-### 5. Evaluate on test set
-```bash
-python hmm_testing.py
-```
-
----
-
-## Key Design Decisions
-
-**Why implement from scratch?** The goal was to develop a deep understanding of the EM algorithm for sequential data. Using a library like `hmmlearn` would have hidden the mechanics of the forward–backward recursion and the M-step update equations.
-
-**Why log-space arithmetic?** MFCC sequences can be 100+ frames long. Computing probabilities by multiplying 100+ small numbers in linear space causes immediate underflow to zero. Log-space addition with the log-sum-exp trick avoids this.
-
-**Why diagonal covariance?** Full covariance matrices require estimating O(D²) parameters per state. With limited training data, diagonal approximations are more statistically efficient and avoid near-singular matrices.
-
----
-
-## Tools & Libraries
-
-| Tool / Library | Purpose |
-|----------------|---------|
-| Python 3.x     | Implementation language |
-| NumPy          | All HMM computations (log-domain forward/backward, Viterbi, EM updates) |
-| librosa        | MFCC feature extraction from audio |
-| scikit-learn   | Confusion matrix computation |
-| matplotlib     | Confusion matrix visualisation |
-
----
-
-## Author
-
-**Bilal Ahmad Sami**  
-MSc Artificial Intelligence, University of Surrey  
-[GitHub](https://github.com/BilalAhmadSami)

@@ -1,6 +1,6 @@
 # Isolated Word Recognition with Hidden Markov Models
 
-**Module:** EEEM030 – Speech & Audio Processing and Recognition  
+**Module:** Speech & Audio Processing and Recognition  
 **Institution:** University of Surrey  
 **Task:** Isolated word recognition over an 11-word vocabulary using Hidden Markov Models trained from scratch in NumPy
 

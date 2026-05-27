@@ -59,7 +59,7 @@ Each word is modelled by an independent **left-right Hidden Markov Model** with 
 | Number of states  | 8                               |
 | Topology          | Left-right (no skip transitions)|
 | Emission          | Diagonal Gaussian (per state)   |
-| Initial state     | State 0 (deterministic, π₀ = 1)|
+| Initial state     | State 0 (deterministic, pi_0 = 1)|
 | Transition init   | Self-loop 0.5 / forward 0.5     |
 | Emission init     | Global mean & variance          |
 | Training epochs   | 15                              |
@@ -72,19 +72,19 @@ All 11 HMMs are initialised with a shared global mean and variance computed over
 
 Parameters are estimated using the **batch Baum–Welch** algorithm (a specialised Expectation–Maximisation procedure for HMMs). All computations are performed in **log space** for numerical stability:
 
-- **Forward procedure** (`log α`): computes the log probability of the partial observation sequence ending in each state at each time step.
-- **Backward procedure** (`log β`): computes the log probability of the remaining observation sequence given the current state.
-- **γ (gamma)**: state occupation probability — the posterior probability of being in state `i` at time `t`.
-- **ξ (xi)**: state transition probability — the posterior probability of transitioning from state `i` to state `j` at time `t`.
+- **Forward procedure** (`log a`): computes the log probability of the partial observation sequence ending in each state at each time step.
+- **Backward procedure** (`log b`): computes the log probability of the remaining observation sequence given the current state.
+- **gamma**: state occupation probability — the posterior probability of being in state `i` at time `t`.
+- **xi**: state transition probability — the posterior probability of transitioning from state `i` to state `j` at time `t`.
 
 The log-sum-exp trick is used throughout to prevent underflow when exponentiating log probabilities.
 
 **M-step update rules:**
 
-- `π` ← expected initial state occupancy (normalised)
-- `A` ← expected transition counts (normalised row-wise)
-- `μᵢ` ← γ-weighted mean of observations (per state)
-- `σ²ᵢ` ← γ-weighted variance of observations (per state)
+- `pi` — expected initial state occupancy (normalised)
+- `A` — expected transition counts (normalised row-wise)
+- `mean_i` — gamma-weighted mean of observations (per state)
+- `var_i` — gamma-weighted variance of observations (per state)
 
 Training monitors log-likelihood and word-error rate on the training set after each epoch.
 
@@ -125,7 +125,7 @@ The low accuracy is expected given the extreme phonetic similarity of the vocabu
 ```
 Isolated-Word-Recognition-HMM/
 ├── descriptor_extraction.py   # MFCC feature extraction pipeline
-├── hmm_training.py            # HMM initialisation + Baum–Welch training
+├── hmm_training.py            # HMM initialisation + Baum-Welch training
 ├── hmm_testing.py             # Viterbi decoding + evaluation
 ├── results/
 │   ├── log_likelihood_per_epoch.png
@@ -144,7 +144,7 @@ Isolated-Word-Recognition-HMM/
 ## How to Run
 
 ### 1. Install dependencies
-```bash
+```
 pip install -r requirements.txt
 ```
 
@@ -152,22 +152,58 @@ pip install -r requirements.txt
 
 Each script contains a configuration section at the top. Update the path constants to point to your local copy of the audio dataset and a directory for intermediate outputs:
 
-```python
-# descriptor_extraction.py
-TRAIN_PATH = "/path/to/DevelopmentSet"
-TEST_PATH  = "/path/to/EvaluationSet"
-DESCRIPTOR_PATH = "/path/to/Descriptors"
 ```
+# descriptor_extraction.py
+TRAIN_PATH      = "/path/to/DevelopmentSet"
+TEST_PATH       = "/path/to/EvaluationSet"
+DESCRIPTOR_PATH = "/path/to/Descriptors"
 
-```python
 # hmm_training.py / hmm_testing.py
 DESCRIPTOR_PATH = "/path/to/Descriptors"
 ```
 
 ### 3. Extract features
-```bash
+```
 python descriptor_extraction.py
 ```
 
 ### 4. Train HMMs
-```bash
+```
+python hmm_training.py
+```
+
+### 5. Evaluate on test set
+```
+python hmm_testing.py
+```
+
+---
+
+## Key Design Decisions
+
+**Why implement from scratch?** The goal was to develop a deep understanding of the EM algorithm for sequential data. Using a library like `hmmlearn` would have hidden the mechanics of the forward–backward recursion and the M-step update equations.
+
+**Why log-space arithmetic?** MFCC sequences can be 100+ frames long. Computing probabilities by multiplying 100+ small numbers in linear space causes immediate underflow to zero. Log-space addition with the log-sum-exp trick avoids this.
+
+**Why diagonal covariance?** Full covariance matrices require estimating O(D^2) parameters per state. With limited training data, diagonal approximations are more statistically efficient and avoid near-singular matrices.
+
+---
+
+## Tools & Libraries
+
+| Tool / Library | Purpose |
+|----------------|---------|
+| Python 3.x     | Implementation language |
+| NumPy          | All HMM computations (log-domain forward/backward, Viterbi, EM updates) |
+| librosa        | MFCC feature extraction from audio |
+| scikit-learn   | Confusion matrix computation |
+| matplotlib     | Training curves and confusion matrix visualisation |
+| seaborn        | Transition matrix heatmaps |
+
+---
+
+## Author
+
+**Bilal Ahmad Sami**  
+MSc Artificial Intelligence, University of Surrey  
+[GitHub](https://github.com/BilalAhmadSami)
